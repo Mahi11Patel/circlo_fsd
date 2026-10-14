@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Community Safety &amp; Reports – Circlo</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="app">
+    <!-- Navigation Bar -->
+    <header class="navbar">
+      <div class="container nav-container">
+        <a href="../index.html" class="brand-logo">
+          <span class="brand-icon">C</span>
+          <span>Circlo</span>
+        </a>
+
+        <!-- Desktop Navigation Links -->
+        <ul class="nav-links">
+          <li><a href="../index.html" class="nav-link">Home</a></li>
+          <li><a href="items.html" class="nav-link">Browse Items</a></li>
+          <template v-if="currentUser">
+            <li><a href="add-item.html" class="nav-link">+ Add Item</a></li>
+            <li><a href="requests.html" class="nav-link">Requests</a></li>
+            <li><a href="my-items.html" class="nav-link">My Items</a></li>
+            <li><a href="borrowed-items.html" class="nav-link">Borrowed</a></li>
+            <li><a href="profile.html" class="nav-link">Profile</a></li>
+            <li v-if="currentUser.role === 'admin'">
+              <a href="admin.html" class="nav-link badge-admin" style="padding: 0.35rem 0.65rem; border-radius: 9999px;">
+                Admin Dashboard
+              </a>
+            </li>
+          </template>
+        </ul>
+
+        <!-- Right Side Nav Actions -->
+        <div class="nav-actions">
+          <template v-if="currentUser">
+            <div class="user-badge-nav">
+              <span class="user-avatar-circle">{{ userInitial }}</span>
+              <span>{{ currentUser.full_name || currentUser.username }}</span>
+            </div>
+            <button @click="logout" class="btn btn-sm btn-outline" title="Log Out">Logout</button>
+          </template>
+          <template v-else>
+            <a href="login.html" class="btn btn-sm btn-outline">Log In</a>
+            <a href="register.html" class="btn btn-sm btn-primary">Sign Up</a>
+          </template>
+
+          <button @click="mobileMenuOpen = !mobileMenuOpen" class="mobile-menu-btn" aria-label="Toggle navigation">
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Mobile Navigation Drawer -->
+      <div v-if="mobileMenuOpen" class="mobile-nav-drawer">
+        <a href="../index.html" class="nav-link" @click="mobileMenuOpen = false">Home</a>
+        <a href="items.html" class="nav-link" @click="mobileMenuOpen = false">Browse Items</a>
+        <template v-if="currentUser">
+          <a href="add-item.html" class="nav-link" @click="mobileMenuOpen = false">+ Add Item</a>
+          <a href="requests.html" class="nav-link" @click="mobileMenuOpen = false">Requests</a>
+          <a href="my-items.html" class="nav-link" @click="mobileMenuOpen = false">My Items</a>
+          <a href="borrowed-items.html" class="nav-link" @click="mobileMenuOpen = false">Borrowed</a>
+          <a href="profile.html" class="nav-link" @click="mobileMenuOpen = false">Profile</a>
+          <a v-if="currentUser.role === 'admin'" href="admin.html" class="nav-link badge-admin" @click="mobileMenuOpen = false">
+            Admin Dashboard
+          </a>
+          <button @click="logout" class="btn btn-block btn-outline" style="margin-top: 0.5rem;">Logout</button>
+        </template>
+      </div>
+    </header>
+
+    <!-- Page Header -->
+    <div style="background: var(--bg-surface); border-bottom: 1px solid var(--border-color); padding: 2rem 0 1.5rem;">
+      <div class="container">
+        <h1>Community Safety &amp; Issue Reporting</h1>
+        <p style="color: var(--text-muted); margin: 0;">Submit an issue for admin moderation. We ensure fairness and community accountability.</p>
+      </div>
+    </div>
+
+    <!-- Main Container -->
+    <main class="container" style="max-width: 640px; padding-top: 2.5rem; padding-bottom: 4rem;">
+      <div v-if="!currentUser" class="alert alert-warning">
+        <span>⚠️ You must be logged in to submit a report. <a href="login.html" style="font-weight: 700; text-decoration: underline;">Log In here</a></span>
+      </div>
+
+      <div v-else class="form-card" style="margin: 0;">
+        <div v-if="successMsg" class="alert alert-success">
+          <span>✅ {{ successMsg }}</span>
+        </div>
+
+        <div v-if="serverError" class="alert alert-danger">
+          <span>⚠️ {{ serverError }}</span>
+        </div>
+
+        <form @submit.prevent="submitReport" novalidate>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="reported_item_id">Related Item ID (Optional)</label>
+              <input 
+                type="number" 
+                id="reported_item_id" 
+                v-model.number="form.reported_item_id" 
+                class="form-control" 
+                placeholder="e.g. 1"
+              >
+              <small class="form-hint">Leave blank if reporting a user conduct issue.</small>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="reported_user_id">Reported User ID (Optional)</label>
+              <input 
+                type="number" 
+                id="reported_user_id" 
+                v-model.number="form.reported_user_id" 
+                class="form-control" 
+                placeholder="e.g. 4"
+              >
+              <small class="form-hint">Leave blank if reporting a defective listing.</small>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="reason">Reason for Report <span style="color: #dc2626;">*</span></label>
+            <select 
+              id="reason" 
+              v-model="form.reason" 
+              class="form-select"
+              :class="{ 'is-invalid': errors.reason }"
+            >
+              <option value="">Select a reason</option>
+              <option value="Late return / No response">Late return / No response</option>
+              <option value="Item damaged or not as described">Item damaged or not as described</option>
+              <option value="Unreachable during scheduled handover">Unreachable during scheduled handover</option>
+              <option value="Fraud / Rule Violation">Fraud / Rule Violation</option>
+              <option value="Inappropriate communication">Inappropriate communication</option>
+              <option value="Other concern">Other concern</option>
+            </select>
+            <!-- Inline Red Error Text -->
+            <span v-if="errors.reason" class="error-text">{{ errors.reason }}</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="details">Detailed Explanation <span style="color: #dc2626;">*</span></label>
+            <textarea 
+              id="details" 
+              v-model.trim="form.details" 
+              class="form-textarea" 
+              :class="{ 'is-invalid': errors.details }"
+              placeholder="Provide specific dates, facts, and relevant background for the admin team..."
+              rows="4"
+            ></textarea>
+            <!-- Inline Red Error Text -->
+            <span v-if="errors.details" class="error-text">{{ errors.details }}</span>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block btn-lg" :disabled="loading" style="margin-top: 1.25rem;">
+            <span v-if="loading" class="spinner" style="width: 18px; height: 18px; border-width: 2px; margin: 0;"></span>
+            <span>{{ loading ? 'Submitting Report...' : 'Submit to Admin Queue' }}</span>
+          </button>
+        </form>
+      </div>
+    </main>
+
+    <!-- Global Toast Container -->
+    <div id="toast-container"></div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="container footer-bottom">
+        &copy; 2026 Circlo Community Sharing Network | Frontend by Archi Gajera
+      </div>
+    </footer>
+  </div>
+
+  <!-- Practical-7 Script Loading Order -->
+  <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/reports.js"></script>
+</body>
+</html>

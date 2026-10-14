@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Circlo – The Community Sharing Network | Don't Buy It, Borrow It</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="app">
+    <!-- Navigation Bar -->
+    <header class="navbar">
+      <div class="container nav-container">
+        <a href="index.html" class="brand-logo">
+          <span class="brand-icon">C</span>
+          <span>Circlo</span>
+          <span class="brand-badge">Community</span>
+        </a>
+
+        <!-- Desktop Navigation Links -->
+        <ul class="nav-links">
+          <li><a href="index.html" class="nav-link active">Home</a></li>
+          <li><a href="pages/items.html" class="nav-link">Browse Items</a></li>
+          
+          <template v-if="currentUser">
+            <li><a href="pages/add-item.html" class="nav-link">+ Add Item</a></li>
+            <li><a href="pages/requests.html" class="nav-link">Requests</a></li>
+            <li><a href="pages/my-items.html" class="nav-link">My Items</a></li>
+            <li><a href="pages/borrowed-items.html" class="nav-link">Borrowed</a></li>
+            <li><a href="pages/profile.html" class="nav-link">Profile</a></li>
+            <li v-if="currentUser.role === 'admin'">
+              <a href="pages/admin.html" class="nav-link badge-admin" style="padding: 0.35rem 0.65rem; border-radius: 9999px;">
+                Admin Dashboard
+              </a>
+            </li>
+          </template>
+        </ul>
+
+        <!-- Right Side Nav Actions -->
+        <div class="nav-actions">
+          <template v-if="currentUser">
+            <div class="user-badge-nav">
+              <span class="user-avatar-circle">{{ userInitial }}</span>
+              <span>{{ currentUser.full_name || currentUser.username }}</span>
+            </div>
+            <button @click="logout" class="btn btn-sm btn-outline" title="Log Out">Logout</button>
+          </template>
+          <template v-else>
+            <a href="pages/login.html" class="btn btn-sm btn-outline">Log In</a>
+            <a href="pages/register.html" class="btn btn-sm btn-primary">Sign Up</a>
+          </template>
+
+          <!-- Mobile Hamburger Toggle -->
+          <button @click="mobileMenuOpen = !mobileMenuOpen" class="mobile-menu-btn" aria-label="Toggle navigation">
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Mobile Navigation Drawer -->
+      <div v-if="mobileMenuOpen" class="mobile-nav-drawer">
+        <a href="index.html" class="nav-link active" @click="mobileMenuOpen = false">Home</a>
+        <a href="pages/items.html" class="nav-link" @click="mobileMenuOpen = false">Browse Items</a>
+        
+        <template v-if="currentUser">
+          <a href="pages/add-item.html" class="nav-link" @click="mobileMenuOpen = false">+ Add Item</a>
+          <a href="pages/requests.html" class="nav-link" @click="mobileMenuOpen = false">Requests</a>
+          <a href="pages/my-items.html" class="nav-link" @click="mobileMenuOpen = false">My Items</a>
+          <a href="pages/borrowed-items.html" class="nav-link" @click="mobileMenuOpen = false">Borrowed</a>
+          <a href="pages/profile.html" class="nav-link" @click="mobileMenuOpen = false">Profile</a>
+          <a v-if="currentUser.role === 'admin'" href="pages/admin.html" class="nav-link badge-admin" @click="mobileMenuOpen = false">
+            Admin Dashboard
+          </a>
+          <button @click="logout" class="btn btn-block btn-outline" style="margin-top: 0.5rem;">Logout</button>
+        </template>
+        <template v-else>
+          <a href="pages/login.html" class="btn btn-block btn-outline" @click="mobileMenuOpen = false">Log In</a>
+          <a href="pages/register.html" class="btn btn-block btn-primary" @click="mobileMenuOpen = false">Sign Up</a>
+        </template>
+      </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="container">
+        <span class="hero-tagline">Campus &amp; Neighborhood Sharing Network</span>
+        <h1 class="hero-title">Don't Buy It, Borrow It.</h1>
+        <p class="hero-subtitle">
+          Save money, reduce waste, and connect with peers. Share textbooks, scientific calculators, maker kits, sports gear, and tools seamlessly.
+        </p>
+
+        <!-- Quick Search Banner -->
+        <div class="hero-search-box">
+          <input 
+            type="text" 
+            v-model="searchQuery" 
+            @keyup.enter="handleSearch"
+            placeholder="Search books, gadgets, equipment..." 
+            class="form-control"
+          >
+          <select v-model="selectedCategory" class="form-select">
+            <option value="">All Categories</option>
+            <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
+          </select>
+          <button @click="handleSearch" class="btn btn-primary">
+            Find Items
+          </button>
+        </div>
+
+        <!-- Hero Stats Row -->
+        <div class="hero-stats-row">
+          <div class="hero-stat-item">
+            <span class="hero-stat-num">{{ stats.itemsCount }}</span>
+            <span class="hero-stat-label">Items Listed</span>
+          </div>
+          <div class="hero-stat-item">
+            <span class="hero-stat-num">100%</span>
+            <span class="hero-stat-label">Free Sharing</span>
+          </div>
+          <div class="hero-stat-item">
+            <span class="hero-stat-num">{{ stats.categoriesCount }}</span>
+            <span class="hero-stat-label">Categories</span>
+          </div>
+          <div class="hero-stat-item">
+            <span class="hero-stat-num">5.0 ★</span>
+            <span class="hero-stat-label">Peer Rated</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Content Area -->
+    <main class="container" style="padding-top: 2.5rem; padding-bottom: 3.5rem;">
+      <!-- Category Strip -->
+      <section style="margin-bottom: 2.5rem;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+          <h2>Featured Categories</h2>
+          <a href="pages/items.html" class="btn btn-sm btn-outline">Explore All &rarr;</a>
+        </div>
+        <div class="category-strip">
+          <div 
+            class="category-chip" 
+            :class="{ active: selectedCategory === '' }" 
+            @click="filterByCategory('')"
+          >
+            <span>✨ All Categories</span>
+          </div>
+          <div 
+            v-for="cat in categories" 
+            :key="cat.id" 
+            class="category-chip" 
+            :class="{ active: selectedCategory === cat.id }" 
+            @click="filterByCategory(cat.id)"
+          >
+            <span>🏷️ {{ cat.name }}</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Featured Items Showcase -->
+      <section>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem;">
+          <div>
+            <h2>Available In Your Community</h2>
+            <p style="color: var(--text-muted); margin: 0;">Verified community items ready to be borrowed today.</p>
+          </div>
+          <a href="pages/items.html" class="btn btn-sm btn-outline-primary">View Full Catalog</a>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div v-if="loading" class="loading-box">
+          <div class="spinner"></div>
+          <p>Discovering available items nearby...</p>
+        </div>
+
+        <!-- Error Message -->
+        <div v-else-if="error" class="alert alert-danger">
+          <span>⚠️ {{ error }}</span>
+        </div>
+
+        <!-- Items Card Grid (Practical-3 Responsive) -->
+        <div v-else-if="items.length > 0" class="card-grid">
+          <div v-for="item in items.slice(0, 6)" :key="item.id" class="card">
+            <div class="card-img-wrapper">
+              <span class="badge badge-success card-badge-top" v-if="item.is_available" v-uppercase>Available</span>
+              <span class="badge badge-warning card-badge-top" v-else v-uppercase>Reserved</span>
+              <span class="badge badge-neutral card-badge-left">{{ item.category_name || 'General' }}</span>
+              <img :src="resolveImage(item.image_url)" :alt="item.title" @error="handleImgFallback">
+            </div>
+            <div class="card-body">
+              <h3 class="card-title">{{ item.title }}</h3>
+              <div class="card-meta">
+                <span class="card-meta-item">📍 {{ item.location }}</span>
+                <span class="card-meta-item">👤 {{ item.owner_name || 'Community Member' }}</span>
+              </div>
+              <p class="card-desc">{{ item.description }}</p>
+              <div class="card-footer">
+                <div class="card-price">
+                  <span>Deposit: </span>
+                  <span class="amount">₹{{ parseFloat(item.deposit_amount || 0).toFixed(2) }}</span>
+                </div>
+                <a :href="'pages/item-details.html?id=' + item.id" class="btn btn-sm btn-primary">
+                  View Details &rarr;
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div v-else class="empty-state">
+          <div class="empty-icon">📦</div>
+          <h3 class="empty-title">No items found</h3>
+          <p class="empty-desc">Be the first to list an item in this category and help your peers!</p>
+          <a href="pages/add-item.html" class="btn btn-primary">+ List First Item</a>
+        </div>
+      </section>
+
+      <!-- How It Works Section -->
+      <section style="margin-top: 4rem; background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 2.5rem 1.5rem; text-align: center;">
+        <span class="badge badge-primary" style="margin-bottom: 0.75rem;">Simple 3-Step Process</span>
+        <h2 style="margin-bottom: 1.5rem;">How Circlo Works</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
+          <div style="padding: 1rem;">
+            <div style="width: 52px; height: 52px; background: var(--primary-light); color: var(--primary); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 1.4rem; font-weight: 800; margin-bottom: 0.75rem;">1</div>
+            <h3>Find What You Need</h3>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Browse books, tools, and calculators posted by fellow students and neighbors.</p>
+          </div>
+          <div style="padding: 1rem;">
+            <div style="width: 52px; height: 52px; background: var(--secondary-light); color: var(--secondary); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 1.4rem; font-weight: 800; margin-bottom: 0.75rem;">2</div>
+            <h3>Request &amp; Connect</h3>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Submit a borrow request with your schedule. The owner approves and arranges handover.</p>
+          </div>
+          <div style="padding: 1rem;">
+            <div style="width: 52px; height: 52px; background: var(--accent-light); color: #b45309; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 1.4rem; font-weight: 800; margin-bottom: 0.75rem;">3</div>
+            <h3>Return &amp; Review</h3>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Return the item safely on time and exchange peer reviews to build community trust.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Global Toast Container -->
+    <div id="toast-container"></div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="container footer-container">
+        <div class="footer-col">
+          <div class="footer-brand">Circlo</div>
+          <p style="max-width: 320px; font-size: 0.85rem; color: #94a3b8;">
+            The Community Sharing Network — Don't Buy It, Borrow It. Built for sustainable campus living and peer-to-peer resource optimization.
+          </p>
+        </div>
+        <div class="footer-col">
+          <h4 style="color: white; margin-bottom: 0.75rem;">Quick Navigation</h4>
+          <ul class="footer-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="pages/items.html">Browse Catalog</a></li>
+            <li><a href="pages/add-item.html">Share an Item</a></li>
+            <li><a href="pages/reports.html">Community Safety &amp; Reports</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4 style="color: white; margin-bottom: 0.75rem;">Project Team</h4>
+          <p style="font-size: 0.85rem; margin-bottom: 0.4rem;">
+            <strong style="color: white;">Archi Gajera</strong> — Frontend Lead (Practical-3 &amp; Practical-7)
+          </p>
+          <p style="font-size: 0.85rem; margin-bottom: 0.4rem;">
+            <strong style="color: white;">Mahi Patel</strong> — Backend &amp; DB Lead (Practical-8 &amp; FSD_PR-9)
+          </p>
+          <p style="font-size: 0.8rem; color: #64748b; margin-top: 0.6rem;">
+            Full Stack Web Development Project
+          </p>
+        </div>
+      </div>
+      <div class="container footer-bottom">
+        &copy; 2026 Circlo Community Sharing Network. All rights reserved.
+      </div>
+    </footer>
+  </div>
+
+  <!-- Practical-7 Script Loading Order -->
+  <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/index.js"></script>
+</body>
+</html>

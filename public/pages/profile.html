@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Profile – Circlo Community Sharing Network</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="app">
+    <!-- Navigation Bar -->
+    <header class="navbar">
+      <div class="container nav-container">
+        <a href="../index.html" class="brand-logo">
+          <span class="brand-icon">C</span>
+          <span>Circlo</span>
+        </a>
+
+        <!-- Desktop Navigation Links -->
+        <ul class="nav-links">
+          <li><a href="../index.html" class="nav-link">Home</a></li>
+          <li><a href="items.html" class="nav-link">Browse Items</a></li>
+          <template v-if="currentUser">
+            <li><a href="add-item.html" class="nav-link">+ Add Item</a></li>
+            <li><a href="requests.html" class="nav-link">Requests</a></li>
+            <li><a href="my-items.html" class="nav-link">My Items</a></li>
+            <li><a href="borrowed-items.html" class="nav-link">Borrowed</a></li>
+            <li><a href="profile.html" class="nav-link active">Profile</a></li>
+            <li v-if="currentUser.role === 'admin'">
+              <a href="admin.html" class="nav-link badge-admin" style="padding: 0.35rem 0.65rem; border-radius: 9999px;">
+                Admin Dashboard
+              </a>
+            </li>
+          </template>
+        </ul>
+
+        <!-- Right Side Nav Actions -->
+        <div class="nav-actions">
+          <template v-if="currentUser">
+            <button @click="logout" class="btn btn-sm btn-outline" title="Log Out">Logout</button>
+          </template>
+          <template v-else>
+            <a href="login.html" class="btn btn-sm btn-outline">Log In</a>
+            <a href="register.html" class="btn btn-sm btn-primary">Sign Up</a>
+          </template>
+
+          <button @click="mobileMenuOpen = !mobileMenuOpen" class="mobile-menu-btn" aria-label="Toggle navigation">
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Mobile Navigation Drawer -->
+      <div v-if="mobileMenuOpen" class="mobile-nav-drawer">
+        <a href="../index.html" class="nav-link" @click="mobileMenuOpen = false">Home</a>
+        <a href="items.html" class="nav-link" @click="mobileMenuOpen = false">Browse Items</a>
+        <template v-if="currentUser">
+          <a href="add-item.html" class="nav-link" @click="mobileMenuOpen = false">+ Add Item</a>
+          <a href="requests.html" class="nav-link" @click="mobileMenuOpen = false">Requests</a>
+          <a href="my-items.html" class="nav-link" @click="mobileMenuOpen = false">My Items</a>
+          <a href="borrowed-items.html" class="nav-link" @click="mobileMenuOpen = false">Borrowed</a>
+          <a href="profile.html" class="nav-link active" @click="mobileMenuOpen = false">Profile</a>
+          <a v-if="currentUser.role === 'admin'" href="admin.html" class="nav-link badge-admin" @click="mobileMenuOpen = false">
+            Admin Dashboard
+          </a>
+          <button @click="logout" class="btn btn-block btn-outline" style="margin-top: 0.5rem;">Logout</button>
+        </template>
+      </div>
+    </header>
+
+    <!-- Page Header -->
+    <div style="background: var(--bg-surface); border-bottom: 1px solid var(--border-color); padding: 2.5rem 0 2rem;">
+      <div class="container">
+        <div style="display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;">
+          <div class="owner-avatar" style="width: 72px; height: 72px; font-size: 2rem;">
+            {{ userInitial }}
+          </div>
+          <div>
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+              <h1 style="margin: 0; font-size: 1.85rem;">{{ profile.full_name || profile.username }}</h1>
+              <span class="badge badge-primary" v-uppercase>{{ profile.role }}</span>
+              <span class="badge badge-success" v-if="profile.status === 'active'" v-uppercase>Active Member</span>
+              <span class="badge badge-danger" v-else v-uppercase>Blocked</span>
+            </div>
+            <p style="color: var(--text-muted); margin: 0.35rem 0 0;">
+              @{{ profile.username }} &bull; 📍 {{ profile.location }}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Container -->
+    <main class="container" style="padding-top: 2rem; padding-bottom: 4rem;">
+      <!-- Loading State -->
+      <div v-if="loading" class="loading-box">
+        <div class="spinner"></div>
+        <p>Loading profile...</p>
+      </div>
+
+      <!-- Error State -->
+      <div v-else-if="error" class="alert alert-danger">
+        <span>⚠️ {{ error }}</span>
+      </div>
+
+      <!-- Profile Cards Grid -->
+      <div v-else style="display: grid; grid-template-columns: 1fr; gap: 2rem;">
+        <!-- Quick Stats Cards (600px+ Tablet responsive) -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon" style="background: var(--primary-light); color: var(--primary);">📦</div>
+            <div class="stat-info">
+              <div class="stat-num">{{ stats.itemsListed }}</div>
+              <div class="stat-label">Items Listed</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background: var(--secondary-light); color: var(--secondary);">🤝</div>
+            <div class="stat-info">
+              <div class="stat-num">{{ stats.itemsBorrowed }}</div>
+              <div class="stat-label">Items Borrowed</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background: var(--accent-light); color: #b45309;">📥</div>
+            <div class="stat-info">
+              <div class="stat-num">{{ stats.requestsReceived }}</div>
+              <div class="stat-label">Incoming Requests</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background: var(--success-light); color: #047857;">⭐</div>
+            <div class="stat-info">
+              <div class="stat-num">5.0 / 5</div>
+              <div class="stat-label">Community Rating</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Account Details Card -->
+        <div class="form-card" style="margin: 0;">
+          <h3 style="margin-bottom: 1.25rem;">Account Information</h3>
+          
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem;">
+            <div>
+              <label class="form-label">Full Name</label>
+              <div style="font-weight: 600;">{{ profile.full_name }}</div>
+            </div>
+            <div>
+              <label class="form-label">Username</label>
+              <div style="font-weight: 600;">{{ profile.username }}</div>
+            </div>
+            <div>
+              <label class="form-label">Email Address</label>
+              <div style="font-weight: 600;">{{ profile.email }}</div>
+            </div>
+            <div>
+              <label class="form-label">Phone Contact</label>
+              <div style="font-weight: 600;">{{ profile.phone || 'Not provided' }}</div>
+            </div>
+            <div>
+              <label class="form-label">Primary Campus Location</label>
+              <div style="font-weight: 600;">{{ profile.location }}</div>
+            </div>
+            <div>
+              <label class="form-label">System Role</label>
+              <div>
+                <span class="badge badge-primary" v-uppercase>{{ profile.role }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="border-top: 1px solid var(--border-color); margin-top: 1.5rem; padding-top: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div style="font-size: 0.85rem; color: var(--text-muted);">
+              Need to resolve an issue or dispute? <a href="reports.html">Submit a Report</a>
+            </div>
+            <button @click="logout" class="btn btn-outline-danger">Sign Out of Account</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Global Toast Container -->
+    <div id="toast-container"></div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="container footer-bottom">
+        &copy; 2026 Circlo Community Sharing Network | Frontend by Archi Gajera
+      </div>
+    </footer>
+  </div>
+
+  <!-- Practical-7 Script Loading Order -->
+  <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/profile.js"></script>
+</body>
+</html>

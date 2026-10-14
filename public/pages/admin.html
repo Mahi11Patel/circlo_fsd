@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard – Circlo Community Sharing Network</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="app">
+    <!-- Navigation Bar -->
+    <header class="navbar">
+      <div class="container nav-container">
+        <a href="../index.html" class="brand-logo">
+          <span class="brand-icon">C</span>
+          <span>Circlo</span>
+          <span class="badge badge-admin" style="font-size: 0.7rem;">Admin</span>
+        </a>
+
+        <!-- Desktop Navigation Links -->
+        <ul class="nav-links">
+          <li><a href="../index.html" class="nav-link">Home</a></li>
+          <li><a href="items.html" class="nav-link">Browse Items</a></li>
+          <template v-if="currentUser">
+            <li><a href="add-item.html" class="nav-link">+ Add Item</a></li>
+            <li><a href="requests.html" class="nav-link">Requests</a></li>
+            <li><a href="my-items.html" class="nav-link">My Items</a></li>
+            <li><a href="borrowed-items.html" class="nav-link">Borrowed</a></li>
+            <li><a href="profile.html" class="nav-link">Profile</a></li>
+            <li v-if="currentUser.role === 'admin'">
+              <a href="admin.html" class="nav-link active badge-admin" style="padding: 0.35rem 0.65rem; border-radius: 9999px;">
+                Admin Dashboard
+              </a>
+            </li>
+          </template>
+        </ul>
+
+        <!-- Right Side Nav Actions -->
+        <div class="nav-actions">
+          <template v-if="currentUser">
+            <div class="user-badge-nav">
+              <span class="user-avatar-circle" style="background: #86198f;">{{ userInitial }}</span>
+              <span>{{ currentUser.full_name || currentUser.username }}</span>
+            </div>
+            <button @click="logout" class="btn btn-sm btn-outline" title="Log Out">Logout</button>
+          </template>
+          <template v-else>
+            <a href="login.html" class="btn btn-sm btn-outline">Log In</a>
+          </template>
+
+          <button @click="mobileMenuOpen = !mobileMenuOpen" class="mobile-menu-btn" aria-label="Toggle navigation">
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Mobile Navigation Drawer -->
+      <div v-if="mobileMenuOpen" class="mobile-nav-drawer">
+        <a href="../index.html" class="nav-link" @click="mobileMenuOpen = false">Home</a>
+        <a href="items.html" class="nav-link" @click="mobileMenuOpen = false">Browse Items</a>
+        <template v-if="currentUser">
+          <a href="add-item.html" class="nav-link" @click="mobileMenuOpen = false">+ Add Item</a>
+          <a href="requests.html" class="nav-link" @click="mobileMenuOpen = false">Requests</a>
+          <a href="my-items.html" class="nav-link" @click="mobileMenuOpen = false">My Items</a>
+          <a href="borrowed-items.html" class="nav-link" @click="mobileMenuOpen = false">Borrowed</a>
+          <a href="profile.html" class="nav-link" @click="mobileMenuOpen = false">Profile</a>
+          <a href="admin.html" class="nav-link active badge-admin" @click="mobileMenuOpen = false">Admin Dashboard</a>
+          <button @click="logout" class="btn btn-block btn-outline" style="margin-top: 0.5rem;">Logout</button>
+        </template>
+      </div>
+    </header>
+
+    <!-- Page Header -->
+    <div style="background: var(--bg-surface); border-bottom: 1px solid var(--border-color); padding: 2rem 0 1.5rem;">
+      <div class="container">
+        <h1>Platform Administration &amp; Moderation</h1>
+        <p style="color: var(--text-muted); margin: 0;">FSD_PR-9 Role-based control panel: Monitor platform metrics, moderate users, and resolve reports.</p>
+      </div>
+    </div>
+
+    <!-- Main Container -->
+    <main class="container" style="padding-top: 2rem; padding-bottom: 4rem;">
+      <!-- Access Denied Alert (403 Forbidden check) -->
+      <div v-if="!isAdmin" class="empty-state" style="border-color: #fca5a5; background: #fff5f5;">
+        <div class="empty-icon">🚫</div>
+        <h2 style="color: #991b1b;">Access Denied (403 Forbidden)</h2>
+        <p class="empty-desc" style="color: #7f1d1d;">
+          You must be logged in as an administrator to view this page. Use the demo account <code>admin</code> (password: <code>1234</code>) to access platform moderation.
+        </p>
+        <a href="login.html" class="btn btn-primary">Sign in as Administrator</a>
+      </div>
+
+      <!-- Admin Allowed Content -->
+      <div v-else>
+        <!-- Metrics Stats Grid (Practical-3 Responsive) -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon" style="background: var(--primary-light); color: var(--primary);">👥</div>
+            <div class="stat-info">
+              <div class="stat-num">{{ stats.totalUsers }}</div>
+              <div class="stat-label">Total Users</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background: var(--secondary-light); color: var(--secondary);">📦</div>
+            <div class="stat-info">
+              <div class="stat-num">{{ stats.totalItems }}</div>
+              <div class="stat-label">Listed Items</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background: var(--info-light); color: var(--info);">🔄</div>
+            <div class="stat-info">
+              <div class="stat-num">{{ stats.activeRequests }}</div>
+              <div class="stat-label">Active Requests</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background: var(--danger-light); color: var(--danger);">🚩</div>
+            <div class="stat-info">
+              <div class="stat-num">{{ stats.pendingReports }}</div>
+              <div class="stat-label">Pending Reports</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="tabs-nav">
+          <button class="tab-btn" :class="{ active: activeTab === 'users' }" @click="activeTab = 'users'">
+            👤 User Moderation ({{ users.length }})
+          </button>
+          <button class="tab-btn" :class="{ active: activeTab === 'reports' }" @click="activeTab = 'reports'">
+            🚩 Reports Queue ({{ reports.length }})
+            <span v-if="stats.pendingReports > 0" class="badge badge-danger" style="margin-left: 0.35rem;">
+              {{ stats.pendingReports }}
+            </span>
+          </button>
+          <button class="tab-btn" :class="{ active: activeTab === 'items' }" @click="activeTab = 'items'">
+            📦 Community Listings ({{ items.length }})
+          </button>
+        </div>
+
+        <!-- Loading State -->
+        <div v-if="loading" class="loading-box">
+          <div class="spinner"></div>
+          <p>Fetching admin moderation records...</p>
+        </div>
+
+        <!-- Tab 1: User Moderation -->
+        <div v-else-if="activeTab === 'users'">
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>User</th>
+                  <th>Contact Info</th>
+                  <th>Location</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="u in users" :key="u.id">
+                  <td>#{{ u.id }}</td>
+                  <td>
+                    <strong>{{ u.full_name || u.username }}</strong>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">@{{ u.username }}</div>
+                  </td>
+                  <td>
+                    <div>{{ u.email }}</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">{{ u.phone || 'No phone' }}</div>
+                  </td>
+                  <td>{{ u.location }}</td>
+                  <td>
+                    <span class="badge" :class="u.role === 'admin' ? 'badge-admin' : 'badge-neutral'" v-uppercase>
+                      {{ u.role }}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="badge" :class="u.status === 'active' ? 'badge-success' : 'badge-danger'" v-uppercase>
+                      {{ u.status }}
+                    </span>
+                  </td>
+                  <td>
+                    <div v-if="u.id !== currentUser.id">
+                      <button 
+                        v-if="u.status === 'active'" 
+                        @click="toggleUserStatus(u.id, 'blocked')" 
+                        class="btn btn-sm btn-danger"
+                      >
+                        Block User
+                      </button>
+                      <button 
+                        v-else 
+                        @click="toggleUserStatus(u.id, 'active')" 
+                        class="btn btn-sm btn-success"
+                      >
+                        Unblock User
+                      </button>
+                    </div>
+                    <span v-else style="font-size: 0.8rem; color: var(--text-muted);">(You)</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Tab 2: Reports Queue -->
+        <div v-else-if="activeTab === 'reports'">
+          <div v-if="reports.length === 0" class="empty-state">
+            <div class="empty-icon">✅</div>
+            <h3 class="empty-title">All clear! No reports pending</h3>
+            <p class="empty-desc">Your community guidelines are being maintained cleanly.</p>
+          </div>
+
+          <div v-else class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Target</th>
+                  <th>Reason</th>
+                  <th>Details</th>
+                  <th>Status</th>
+                  <th>Admin Notes</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="rep in reports" :key="rep.id">
+                  <td>#{{ rep.id }}</td>
+                  <td>
+                    <div v-if="rep.reported_user_id">👤 User ID #{{ rep.reported_user_id }}</div>
+                    <div v-if="rep.reported_item_id">📦 Item ID #{{ rep.reported_item_id }}</div>
+                  </td>
+                  <td>
+                    <strong>{{ rep.reason }}</strong>
+                  </td>
+                  <td style="font-size: 0.85rem; max-width: 250px;">
+                    {{ rep.details }}
+                  </td>
+                  <td>
+                    <span :class="getReportStatusBadge(rep.status)" v-uppercase>
+                      {{ rep.status }}
+                    </span>
+                  </td>
+                  <td style="font-size: 0.85rem; color: #4338ca;">
+                    {{ rep.admin_notes || '—' }}
+                  </td>
+                  <td>
+                    <button 
+                      v-if="rep.status === 'pending'" 
+                      @click="openReportModal(rep)" 
+                      class="btn btn-sm btn-primary"
+                    >
+                      Review
+                    </button>
+                    <span v-else style="color: var(--text-muted); font-size: 0.85rem;">Resolved</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Tab 3: Community Items Oversight -->
+        <div v-else-if="activeTab === 'items'">
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Item Title</th>
+                  <th>Category</th>
+                  <th>Owner</th>
+                  <th>Deposit</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="it in items" :key="it.id">
+                  <td>#{{ it.id }}</td>
+                  <td>
+                    <strong>{{ it.title }}</strong>
+                  </td>
+                  <td>{{ it.category_name || 'General' }}</td>
+                  <td>{{ it.owner_name }}</td>
+                  <td>₹{{ parseFloat(it.deposit_amount || 0).toFixed(2) }}</td>
+                  <td>
+                    <span class="badge badge-success" v-if="it.is_available" v-uppercase>Available</span>
+                    <span class="badge badge-warning" v-else v-uppercase>Reserved</span>
+                  </td>
+                  <td>
+                    <button @click="deleteItem(it.id)" class="btn btn-sm btn-danger">
+                      Remove
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Review Report Modal -->
+    <div v-if="showReportModal" class="modal-backdrop">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h3 class="modal-title">Review &amp; Moderate Report #{{ selectedReport ? selectedReport.id : '' }}</h3>
+          <button @click="showReportModal = false" class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p>
+            <strong>Reason:</strong> {{ selectedReport ? selectedReport.reason : '' }}
+          </p>
+          <p style="font-size: 0.9rem; color: var(--text-muted);">
+            {{ selectedReport ? selectedReport.details : '' }}
+          </p>
+
+          <div class="form-group">
+            <label class="form-label" for="report_status">Resolution Status</label>
+            <select id="report_status" v-model="reportForm.status" class="form-select">
+              <option value="reviewed">Reviewed &amp; Action Taken</option>
+              <option value="dismissed">Dismissed (No Action Required)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="admin_notes">Admin Resolution Notes</label>
+            <textarea 
+              id="admin_notes" 
+              v-model.trim="reportForm.admin_notes" 
+              class="form-textarea" 
+              placeholder="Record actions taken, e.g. Warning issued to user, item verified returned."
+              rows="3"
+            ></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button @click="showReportModal = false" class="btn btn-outline">Cancel</button>
+          <button @click="submitReportReview" class="btn btn-primary" :disabled="submittingReport">
+            Save Resolution
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Global Toast Container -->
+    <div id="toast-container"></div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="container footer-bottom">
+        &copy; 2026 Circlo Community Sharing Network | Frontend by Archi Gajera
+      </div>
+    </footer>
+  </div>
+
+  <!-- Practical-7 Script Loading Order -->
+  <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/admin.js"></script>
+</body>
+</html>

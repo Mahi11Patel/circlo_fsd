@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <rect width="400" height="300" fill="#312e81" rx="12"/>
+  <rect x="130" y="70" width="140" height="150" rx="6" fill="#4338ca"/>
+  <rect x="145" y="85" width="110" height="120" rx="3" fill="#e0e7ff"/>
+  <line x1="160" y1="110" x2="235" y2="110" stroke="#4338ca" stroke-width="4"/>
+  <line x1="160" y1="130" x2="235" y2="130" stroke="#4338ca" stroke-width="4"/>
+  <line x1="160" y1="150" x2="215" y2="150" stroke="#4338ca" stroke-width="4"/>
+  <line x1="160" y1="170" x2="225" y2="170" stroke="#4338ca" stroke-width="4"/>
+  <text x="200" y="260" text-anchor="middle" fill="#c7d2fe" font-family="'Segoe UI', sans-serif" font-weight="bold" font-size="16">Textbook &amp; Academics</text>
+</svg>

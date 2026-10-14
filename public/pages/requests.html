@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Borrow Requests – Circlo Community Sharing Network</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="app">
+    <!-- Navigation Bar -->
+    <header class="navbar">
+      <div class="container nav-container">
+        <a href="../index.html" class="brand-logo">
+          <span class="brand-icon">C</span>
+          <span>Circlo</span>
+        </a>
+
+        <!-- Desktop Navigation Links -->
+        <ul class="nav-links">
+          <li><a href="../index.html" class="nav-link">Home</a></li>
+          <li><a href="items.html" class="nav-link">Browse Items</a></li>
+          <template v-if="currentUser">
+            <li><a href="add-item.html" class="nav-link">+ Add Item</a></li>
+            <li><a href="requests.html" class="nav-link active">Requests</a></li>
+            <li><a href="my-items.html" class="nav-link">My Items</a></li>
+            <li><a href="borrowed-items.html" class="nav-link">Borrowed</a></li>
+            <li><a href="profile.html" class="nav-link">Profile</a></li>
+            <li v-if="currentUser.role === 'admin'">
+              <a href="admin.html" class="nav-link badge-admin" style="padding: 0.35rem 0.65rem; border-radius: 9999px;">
+                Admin Dashboard
+              </a>
+            </li>
+          </template>
+        </ul>
+
+        <!-- Right Side Nav Actions -->
+        <div class="nav-actions">
+          <template v-if="currentUser">
+            <div class="user-badge-nav">
+              <span class="user-avatar-circle">{{ userInitial }}</span>
+              <span>{{ currentUser.full_name || currentUser.username }}</span>
+            </div>
+            <button @click="logout" class="btn btn-sm btn-outline" title="Log Out">Logout</button>
+          </template>
+          <template v-else>
+            <a href="login.html" class="btn btn-sm btn-outline">Log In</a>
+            <a href="register.html" class="btn btn-sm btn-primary">Sign Up</a>
+          </template>
+
+          <button @click="mobileMenuOpen = !mobileMenuOpen" class="mobile-menu-btn" aria-label="Toggle navigation">
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Mobile Navigation Drawer -->
+      <div v-if="mobileMenuOpen" class="mobile-nav-drawer">
+        <a href="../index.html" class="nav-link" @click="mobileMenuOpen = false">Home</a>
+        <a href="items.html" class="nav-link" @click="mobileMenuOpen = false">Browse Items</a>
+        <template v-if="currentUser">
+          <a href="add-item.html" class="nav-link" @click="mobileMenuOpen = false">+ Add Item</a>
+          <a href="requests.html" class="nav-link active" @click="mobileMenuOpen = false">Requests</a>
+          <a href="my-items.html" class="nav-link" @click="mobileMenuOpen = false">My Items</a>
+          <a href="borrowed-items.html" class="nav-link" @click="mobileMenuOpen = false">Borrowed</a>
+          <a href="profile.html" class="nav-link" @click="mobileMenuOpen = false">Profile</a>
+          <a v-if="currentUser.role === 'admin'" href="admin.html" class="nav-link badge-admin" @click="mobileMenuOpen = false">
+            Admin Dashboard
+          </a>
+          <button @click="logout" class="btn btn-block btn-outline" style="margin-top: 0.5rem;">Logout</button>
+        </template>
+      </div>
+    </header>
+
+    <!-- Page Header -->
+    <div style="background: var(--bg-surface); border-bottom: 1px solid var(--border-color); padding: 2rem 0 1.5rem;">
+      <div class="container">
+        <h1>Borrowing Transactions &amp; Requests</h1>
+        <p style="color: var(--text-muted); margin: 0;">Approve incoming requests for your items and track your sent requests.</p>
+      </div>
+    </div>
+
+    <!-- Main Container -->
+    <main class="container" style="padding-top: 2rem; padding-bottom: 4rem;">
+      <!-- Tabs Navigation -->
+      <div class="tabs-nav">
+        <button 
+          class="tab-btn" 
+          :class="{ active: activeTab === 'incoming' }" 
+          @click="switchTab('incoming')"
+        >
+          📥 Incoming Requests (For My Items)
+          <span v-if="pendingIncomingCount > 0" class="badge badge-warning" style="margin-left: 0.4rem;">
+            {{ pendingIncomingCount }}
+          </span>
+        </button>
+        <button 
+          class="tab-btn" 
+          :class="{ active: activeTab === 'outgoing' }" 
+          @click="switchTab('outgoing')"
+        >
+          📤 My Sent Requests
+        </button>
+      </div>
+
+      <!-- Loading State -->
+      <div v-if="loading" class="loading-box">
+        <div class="spinner"></div>
+        <p>Loading requests...</p>
+      </div>
+
+      <!-- Error State -->
+      <div v-else-if="error" class="alert alert-danger">
+        <span>⚠️ {{ error }}</span>
+      </div>
+
+      <!-- Tab 1: Incoming Requests -->
+      <div v-else-if="activeTab === 'incoming'">
+        <div v-if="incomingRequests.length === 0" class="empty-state">
+          <div class="empty-icon">📥</div>
+          <h3 class="empty-title">No incoming requests yet</h3>
+          <p class="empty-desc">When peers request to borrow your items, they will appear here for you to approve or reject.</p>
+          <a href="add-item.html" class="btn btn-primary">+ List Another Item</a>
+        </div>
+
+        <div v-else class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Borrower</th>
+                <th>Borrow Period</th>
+                <th>Message</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="req in incomingRequests" :key="req.id">
+                <td>
+                  <strong>{{ req.item_title }}</strong>
+                </td>
+                <td>
+                  <div>{{ req.borrower_name }}</div>
+                </td>
+                <td>
+                  <span v-format-date="req.start_date"></span>
+                  &rarr;
+                  <span v-format-date="req.end_date"></span>
+                </td>
+                <td>
+                  <div style="font-size: 0.85rem; color: var(--text-muted); max-width: 250px;">
+                    {{ req.message || 'No message provided' }}
+                  </div>
+                  <div v-if="req.owner_response_note" style="font-size: 0.8rem; color: #4338ca; margin-top: 0.2rem;">
+                    <em>Note: {{ req.owner_response_note }}</em>
+                  </div>
+                </td>
+                <td>
+                  <span :class="getStatusBadgeClass(req.status)" v-uppercase>
+                    {{ req.status }}
+                  </span>
+                </td>
+                <td>
+                  <!-- Pending State Actions -->
+                  <div v-if="req.status === 'pending'" style="display: flex; gap: 0.4rem;">
+                    <button @click="openApproveModal(req)" class="btn btn-sm btn-success">
+                      Approve
+                    </button>
+                    <button @click="updateStatus(req.id, 'rejected')" class="btn btn-sm btn-danger">
+                      Reject
+                    </button>
+                  </div>
+
+                  <!-- Approved State Actions -->
+                  <div v-else-if="req.status === 'approved'" style="display: flex; gap: 0.4rem;">
+                    <button @click="updateStatus(req.id, 'borrowed')" class="btn btn-sm btn-primary">
+                      Mark Handed Over
+                    </button>
+                  </div>
+
+                  <!-- Borrowed State Actions -->
+                  <div v-else-if="req.status === 'borrowed'" style="display: flex; gap: 0.4rem;">
+                    <button @click="updateStatus(req.id, 'returned')" class="btn btn-sm btn-secondary">
+                      Mark Returned
+                    </button>
+                  </div>
+
+                  <span v-else style="color: var(--text-muted); font-size: 0.85rem;">
+                    Completed
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tab 2: Outgoing Requests -->
+      <div v-else-if="activeTab === 'outgoing'">
+        <div v-if="outgoingRequests.length === 0" class="empty-state">
+          <div class="empty-icon">📤</div>
+          <h3 class="empty-title">You haven't requested any items yet</h3>
+          <p class="empty-desc">Need a textbook, lab kit, or gadget? Browse our catalog and submit a request!</p>
+          <a href="items.html" class="btn btn-primary">Browse Catalog</a>
+        </div>
+
+        <div v-else class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Dates</th>
+                <th>Your Note</th>
+                <th>Owner Response</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="req in outgoingRequests" :key="req.id">
+                <td>
+                  <strong>{{ req.item_title }}</strong>
+                </td>
+                <td>
+                  <span v-format-date="req.start_date"></span> &rarr; <span v-format-date="req.end_date"></span>
+                </td>
+                <td style="font-size: 0.85rem; color: var(--text-muted);">
+                  {{ req.message || '—' }}
+                </td>
+                <td style="font-size: 0.85rem;">
+                  <span v-if="req.owner_response_note" style="color: #4338ca;">{{ req.owner_response_note }}</span>
+                  <span v-else style="color: var(--text-subtle);">Waiting for owner...</span>
+                </td>
+                <td>
+                  <span :class="getStatusBadgeClass(req.status)" v-uppercase>
+                    {{ req.status }}
+                  </span>
+                </td>
+                <td>
+                  <button 
+                    v-if="req.status === 'pending'" 
+                    @click="updateStatus(req.id, 'cancelled')" 
+                    class="btn btn-sm btn-outline"
+                  >
+                    Cancel
+                  </button>
+                  <a 
+                    v-else-if="req.status === 'returned'" 
+                    href="borrowed-items.html" 
+                    class="btn btn-sm btn-outline-primary"
+                  >
+                    Rate &amp; Review
+                  </a>
+                  <span v-else style="color: var(--text-muted); font-size: 0.85rem;">—</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+
+    <!-- Approve Modal with Pickup Notes -->
+    <div v-if="showApproveModal" class="modal-backdrop">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h3 class="modal-title">Approve Borrow Request</h3>
+          <button @click="showApproveModal = false" class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p>
+            You are approving request for: <strong>{{ selectedRequest ? selectedRequest.item_title : '' }}</strong>
+          </p>
+          <div class="form-group">
+            <label class="form-label" for="pickup_note">Pickup / Handover Instructions (Optional)</label>
+            <textarea 
+              id="pickup_note" 
+              v-model.trim="ownerNote" 
+              class="form-textarea" 
+              placeholder="e.g. You can collect it from Hostel Block A room 204 after 6 PM."
+              rows="3"
+            ></textarea>
+            <small class="form-hint">This will be shared with the borrower so they know where to collect the item.</small>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button @click="showApproveModal = false" class="btn btn-outline">Cancel</button>
+          <button @click="confirmApproval" class="btn btn-success" :disabled="submittingAction">
+            Confirm Approval
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Global Toast Container -->
+    <div id="toast-container"></div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="container footer-bottom">
+        &copy; 2026 Circlo Community Sharing Network | Frontend by Archi Gajera
+      </div>
+    </footer>
+  </div>
+
+  <!-- Practical-7 Script Loading Order -->
+  <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/requests.js"></script>
+</body>
+</html>

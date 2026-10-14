@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>List an Item – Circlo Community Sharing Network</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="app">
+    <!-- Navigation Bar -->
+    <header class="navbar">
+      <div class="container nav-container">
+        <a href="../index.html" class="brand-logo">
+          <span class="brand-icon">C</span>
+          <span>Circlo</span>
+        </a>
+
+        <!-- Desktop Navigation Links -->
+        <ul class="nav-links">
+          <li><a href="../index.html" class="nav-link">Home</a></li>
+          <li><a href="items.html" class="nav-link">Browse Items</a></li>
+          <template v-if="currentUser">
+            <li><a href="add-item.html" class="nav-link active">+ Add Item</a></li>
+            <li><a href="requests.html" class="nav-link">Requests</a></li>
+            <li><a href="my-items.html" class="nav-link">My Items</a></li>
+            <li><a href="borrowed-items.html" class="nav-link">Borrowed</a></li>
+            <li><a href="profile.html" class="nav-link">Profile</a></li>
+            <li v-if="currentUser.role === 'admin'">
+              <a href="admin.html" class="nav-link badge-admin" style="padding: 0.35rem 0.65rem; border-radius: 9999px;">
+                Admin Dashboard
+              </a>
+            </li>
+          </template>
+        </ul>
+
+        <!-- Right Side Nav Actions -->
+        <div class="nav-actions">
+          <template v-if="currentUser">
+            <div class="user-badge-nav">
+              <span class="user-avatar-circle">{{ userInitial }}</span>
+              <span>{{ currentUser.full_name || currentUser.username }}</span>
+            </div>
+            <button @click="logout" class="btn btn-sm btn-outline" title="Log Out">Logout</button>
+          </template>
+          <template v-else>
+            <a href="login.html" class="btn btn-sm btn-outline">Log In</a>
+            <a href="register.html" class="btn btn-sm btn-primary">Sign Up</a>
+          </template>
+
+          <!-- Mobile Hamburger Toggle -->
+          <button @click="mobileMenuOpen = !mobileMenuOpen" class="mobile-menu-btn" aria-label="Toggle navigation">
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Mobile Navigation Drawer -->
+      <div v-if="mobileMenuOpen" class="mobile-nav-drawer">
+        <a href="../index.html" class="nav-link" @click="mobileMenuOpen = false">Home</a>
+        <a href="items.html" class="nav-link" @click="mobileMenuOpen = false">Browse Items</a>
+        <template v-if="currentUser">
+          <a href="add-item.html" class="nav-link active" @click="mobileMenuOpen = false">+ Add Item</a>
+          <a href="requests.html" class="nav-link" @click="mobileMenuOpen = false">Requests</a>
+          <a href="my-items.html" class="nav-link" @click="mobileMenuOpen = false">My Items</a>
+          <a href="borrowed-items.html" class="nav-link" @click="mobileMenuOpen = false">Borrowed</a>
+          <a href="profile.html" class="nav-link" @click="mobileMenuOpen = false">Profile</a>
+          <a v-if="currentUser.role === 'admin'" href="admin.html" class="nav-link badge-admin" @click="mobileMenuOpen = false">
+            Admin Dashboard
+          </a>
+          <button @click="logout" class="btn btn-block btn-outline" style="margin-top: 0.5rem;">Logout</button>
+        </template>
+      </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="container" style="max-width: 800px; padding-top: 2.5rem; padding-bottom: 4rem;">
+      <div style="margin-bottom: 1.5rem;">
+        <h1>List an Item for Community Sharing</h1>
+        <p style="color: var(--text-muted); margin: 0;">Fill in the details below to make your item available for your campus community.</p>
+      </div>
+
+      <!-- Auth Check Notice -->
+      <div v-if="!currentUser" class="alert alert-warning">
+        <span>⚠️ You must be logged in to list an item. <a href="login.html" style="font-weight: 700; text-decoration: underline;">Log In here</a></span>
+      </div>
+
+      <!-- Post Item Form -->
+      <div v-else class="form-card" style="margin: 0;">
+        <form @submit.prevent="handleSubmit" novalidate>
+          <div class="form-group">
+            <label class="form-label" for="title">Item Title <span style="color: #dc2626;">*</span></label>
+            <input 
+              type="text" 
+              id="title" 
+              v-model.trim="form.title" 
+              class="form-control" 
+              :class="{ 'is-invalid': errors.title }"
+              placeholder="e.g. Casio Scientific Calculator fx-991EX or Engineering Graphics Drafter"
+            >
+            <!-- Inline Red Error Text -->
+            <span v-if="errors.title" class="error-text">{{ errors.title }}</span>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="category_id">Category <span style="color: #dc2626;">*</span></label>
+              <select 
+                id="category_id" 
+                v-model="form.category_id" 
+                class="form-select"
+                :class="{ 'is-invalid': errors.category_id }"
+              >
+                <option value="">Select a Category</option>
+                <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
+              </select>
+              <!-- Inline Red Error Text -->
+              <span v-if="errors.category_id" class="error-text">{{ errors.category_id }}</span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="item_condition">Item Condition <span style="color: #dc2626;">*</span></label>
+              <select id="item_condition" v-model="form.item_condition" class="form-select">
+                <option value="new">Brand New</option>
+                <option value="like_new">Like New</option>
+                <option value="good">Good (Normal Wear)</option>
+                <option value="fair">Fair (Usable)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="description">Detailed Description <span style="color: #dc2626;">*</span></label>
+            <textarea 
+              id="description" 
+              v-model.trim="form.description" 
+              class="form-textarea" 
+              :class="{ 'is-invalid': errors.description }"
+              placeholder="Describe condition, what is included (cables, manuals), and usage guidelines..."
+              rows="4"
+            ></textarea>
+            <!-- Inline Red Error Text -->
+            <span v-if="errors.description" class="error-text">{{ errors.description }}</span>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="location">Pickup Location <span style="color: #dc2626;">*</span></label>
+              <input 
+                type="text" 
+                id="location" 
+                v-model.trim="form.location" 
+                class="form-control" 
+                :class="{ 'is-invalid': errors.location }"
+                placeholder="e.g. Hostel Block A, Room 204"
+              >
+              <!-- Inline Red Error Text -->
+              <span v-if="errors.location" class="error-text">{{ errors.location }}</span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="deposit_amount">Refundable Deposit (₹)</label>
+              <input 
+                type="number" 
+                id="deposit_amount" 
+                v-model.number="form.deposit_amount" 
+                class="form-control" 
+                :class="{ 'is-invalid': errors.deposit_amount }"
+                min="0" 
+                step="10"
+                placeholder="0.00"
+              >
+              <!-- Inline Red Error Text -->
+              <span v-if="errors.deposit_amount" class="error-text">{{ errors.deposit_amount }}</span>
+              <small class="form-hint">Set ₹0 for 100% free borrowing, or a safety deposit for expensive electronics.</small>
+            </div>
+          </div>
+
+          <!-- Image Selection & URL -->
+          <div class="form-group">
+            <label class="form-label" for="image_url">Image Representation</label>
+            <div style="display: flex; gap: 0.5rem; margin-bottom: 0.6rem; flex-wrap: wrap;">
+              <button type="button" @click="setImagePreset('/images/book.png')" class="btn btn-sm btn-outline">📚 Book</button>
+              <button type="button" @click="setImagePreset('/images/calc.png')" class="btn btn-sm btn-outline">🧮 Calculator</button>
+              <button type="button" @click="setImagePreset('/images/arduino.png')" class="btn btn-sm btn-outline">⚡ Arduino / Lab</button>
+              <button type="button" @click="setImagePreset('/images/racket.png')" class="btn btn-sm btn-outline">🏸 Sports</button>
+              <button type="button" @click="setImagePreset('/images/multimeter.png')" class="btn btn-sm btn-outline">🔧 Tools</button>
+              <button type="button" @click="setImagePreset('/images/placeholder.png')" class="btn btn-sm btn-outline">📦 Default</button>
+            </div>
+            <input 
+              type="text" 
+              id="image_url" 
+              v-model.trim="form.image_url" 
+              class="form-control" 
+              placeholder="/images/placeholder.png or https://example.com/image.jpg"
+            >
+            <small class="form-hint">Click a sample above or paste an image URL.</small>
+          </div>
+
+          <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem;">
+            <a href="items.html" class="btn btn-outline">Cancel</a>
+            <button type="submit" class="btn btn-primary btn-lg" :disabled="loading">
+              <span v-if="loading" class="spinner" style="width: 18px; height: 18px; border-width: 2px; margin: 0;"></span>
+              <span>{{ loading ? 'Publishing Item...' : 'Publish Listing' }}</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </main>
+
+    <!-- Global Toast Container -->
+    <div id="toast-container"></div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="container footer-bottom">
+        &copy; 2026 Circlo Community Sharing Network | Frontend by Archi Gajera
+      </div>
+    </footer>
+  </div>
+
+  <!-- Practical-7 Script Loading Order -->
+  <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/add-item.js"></script>
+</body>
+</html>

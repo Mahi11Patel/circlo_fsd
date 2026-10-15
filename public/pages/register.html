@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create an Account – Circlo Community Sharing Network</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="app">
+    <!-- Navigation Bar -->
+    <header class="navbar">
+      <div class="container nav-container">
+        <a href="../index.html" class="brand-logo">
+          <span class="brand-icon">C</span>
+          <span>Circlo</span>
+        </a>
+
+        <ul class="nav-links">
+          <li><a href="../index.html" class="nav-link">Home</a></li>
+          <li><a href="items.html" class="nav-link">Browse Items</a></li>
+        </ul>
+
+        <div class="nav-actions">
+          <a href="login.html" class="btn btn-sm btn-outline">Already a Member? Log In</a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container" style="max-width: 580px; padding-top: 2.5rem; padding-bottom: 3.5rem;">
+      <div class="form-card">
+        <div style="text-align: center; margin-bottom: 1.5rem;">
+          <div class="brand-icon" style="width: 44px; height: 44px; font-size: 1.4rem; margin: 0 auto 0.75rem;">C</div>
+          <h2>Join Circlo</h2>
+          <p style="color: var(--text-muted); font-size: 0.9rem;">Sign up to borrow and list items within your community</p>
+        </div>
+
+        <!-- Global Server Error Alert -->
+        <div v-if="serverError" class="alert alert-danger">
+          <span>⚠️ {{ serverError }}</span>
+        </div>
+
+        <div v-if="successMsg" class="alert alert-success">
+          <span>✅ {{ successMsg }}</span>
+        </div>
+
+        <!-- Registration Form -->
+        <form @submit.prevent="handleRegister" novalidate>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="full_name">Full Name <span style="color: #dc2626;">*</span></label>
+              <input 
+                type="text" 
+                id="full_name" 
+                v-model.trim="form.full_name" 
+                class="form-control" 
+                :class="{ 'is-invalid': errors.full_name }"
+                placeholder="e.g. Rahul Sharma"
+              >
+              <!-- Inline Red Error Text -->
+              <span v-if="errors.full_name" class="error-text">{{ errors.full_name }}</span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="username">Username <span style="color: #dc2626;">*</span></label>
+              <input 
+                type="text" 
+                id="username" 
+                v-model.trim="form.username" 
+                class="form-control" 
+                :class="{ 'is-invalid': errors.username }"
+                placeholder="e.g. rahul_s"
+              >
+              <!-- Inline Red Error Text -->
+              <span v-if="errors.username" class="error-text">{{ errors.username }}</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="email">Campus or Personal Email <span style="color: #dc2626;">*</span></label>
+            <input 
+              type="email" 
+              id="email" 
+              v-model.trim="form.email" 
+              class="form-control" 
+              :class="{ 'is-invalid': errors.email }"
+              placeholder="e.g. student@nirmauni.ac.in"
+            >
+            <!-- Inline Red Error Text -->
+            <span v-if="errors.email" class="error-text">{{ errors.email }}</span>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="password">Password <span style="color: #dc2626;">*</span></label>
+              <input 
+                type="password" 
+                id="password" 
+                v-model="form.password" 
+                class="form-control" 
+                :class="{ 'is-invalid': errors.password }"
+                placeholder="Minimum 4 characters"
+              >
+              <!-- Inline Red Error Text -->
+              <span v-if="errors.password" class="error-text">{{ errors.password }}</span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="phone">Phone Number (Optional)</label>
+              <input 
+                type="tel" 
+                id="phone" 
+                v-model.trim="form.phone" 
+                class="form-control" 
+                placeholder="e.g. 9876543210"
+              >
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="location">Campus Block or Location <span style="color: #dc2626;">*</span></label>
+            <input 
+              type="text" 
+              id="location" 
+              v-model.trim="form.location" 
+              class="form-control" 
+              :class="{ 'is-invalid': errors.location }"
+              placeholder="e.g. Hostel Block A, Room 204 or Library"
+            >
+            <!-- Inline Red Error Text -->
+            <span v-if="errors.location" class="error-text">{{ errors.location }}</span>
+            <small class="form-hint">Used by fellow community members to arrange local handovers.</small>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block btn-lg" :disabled="loading" style="margin-top: 1.25rem;">
+            <span v-if="loading" class="spinner" style="width: 18px; height: 18px; border-width: 2px; margin: 0;"></span>
+            <span>{{ loading ? 'Creating Account...' : 'Complete Registration' }}</span>
+          </button>
+        </form>
+
+        <div style="text-align: center; margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-muted);">
+          Already have an account? 
+          <a href="login.html" style="font-weight: 700;">Sign in here</a>
+        </div>
+      </div>
+    </main>
+
+    <!-- Global Toast Container -->
+    <div id="toast-container"></div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="container footer-bottom">
+        &copy; 2026 Circlo Community Sharing Network | Frontend by Archi Gajera
+      </div>
+    </footer>
+  </div>
+
+  <!-- Practical-7 Script Loading Order -->
+  <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/register.js"></script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4f46e5" />
+      <stop offset="100%" stop-color="#0d9488" />
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#bg)" rx="12" />
+  <circle cx="200" cy="130" r="60" fill="white" opacity="0.15" />
+  <path d="M170 120 L200 95 L230 120 L230 170 L170 170 Z" fill="white" opacity="0.85" />
+  <text x="200" y="210" text-anchor="middle" fill="white" font-family="'Segoe UI', sans-serif" font-weight="bold" font-size="20">Circlo Community Item</text>
+  <text x="200" y="235" text-anchor="middle" fill="#c7d2fe" font-family="'Segoe UI', sans-serif" font-size="14">Share and Borrow Within Community</text>
+</svg>

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <rect width="400" height="300" fill="#1e1b4b" rx="12"/>
+  <rect x="135" y="55" width="130" height="185" rx="12" fill="#eab308" stroke="#ca8a04" stroke-width="4"/>
+  <rect x="155" y="75" width="90" height="40" rx="4" fill="#1e293b"/>
+  <text x="200" y="102" text-anchor="middle" fill="#22c55e" font-family="monospace" font-weight="bold" font-size="18">0.00 V</text>
+  <circle cx="200" cy="160" r="28" fill="#1e293b"/>
+  <line x1="200" y1="160" x2="200" y2="140" stroke="#eab308" stroke-width="4"/>
+  <circle cx="170" cy="210" r="7" fill="#ef4444"/>
+  <circle cx="230" cy="210" r="7" fill="#000000"/>
+  <text x="200" y="275" text-anchor="middle" fill="#fef08a" font-family="'Segoe UI', sans-serif" font-weight="bold" font-size="14">Digital Multimeter</text>
+</svg>

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <rect width="400" height="300" fill="#431407" rx="12"/>
+  <circle cx="180" cy="110" r="55" fill="none" stroke="#ea580c" stroke-width="6"/>
+  <line x1="180" y1="55" x2="180" y2="165" stroke="#fed7aa" stroke-width="1"/>
+  <line x1="125" y1="110" x2="235" y2="110" stroke="#fed7aa" stroke-width="1"/>
+  <line x1="180" y1="165" x2="240" y2="230" stroke="#ea580c" stroke-width="8"/>
+  <rect x="235" y="220" width="20" height="40" rx="4" fill="#fed7aa" transform="rotate(-45 235 220)"/>
+  <text x="200" y="275" text-anchor="middle" fill="#fdba74" font-family="'Segoe UI', sans-serif" font-weight="bold" font-size="14">Sports Badminton Racket</text>
+</svg>

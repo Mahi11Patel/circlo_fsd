@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Items – Circlo Community Sharing Network</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="app">
+    <!-- Navigation Bar -->
+    <header class="navbar">
+      <div class="container nav-container">
+        <a href="../index.html" class="brand-logo">
+          <span class="brand-icon">C</span>
+          <span>Circlo</span>
+        </a>
+
+        <!-- Desktop Navigation Links -->
+        <ul class="nav-links">
+          <li><a href="../index.html" class="nav-link">Home</a></li>
+          <li><a href="items.html" class="nav-link">Browse Items</a></li>
+          <template v-if="currentUser">
+            <li><a href="add-item.html" class="nav-link">+ Add Item</a></li>
+            <li><a href="requests.html" class="nav-link">Requests</a></li>
+            <li><a href="my-items.html" class="nav-link active">My Items</a></li>
+            <li><a href="borrowed-items.html" class="nav-link">Borrowed</a></li>
+            <li><a href="profile.html" class="nav-link">Profile</a></li>
+            <li v-if="currentUser.role === 'admin'">
+              <a href="admin.html" class="nav-link badge-admin" style="padding: 0.35rem 0.65rem; border-radius: 9999px;">
+                Admin Dashboard
+              </a>
+            </li>
+          </template>
+        </ul>
+
+        <!-- Right Side Nav Actions -->
+        <div class="nav-actions">
+          <template v-if="currentUser">
+            <div class="user-badge-nav">
+              <span class="user-avatar-circle">{{ userInitial }}</span>
+              <span>{{ currentUser.full_name || currentUser.username }}</span>
+            </div>
+            <button @click="logout" class="btn btn-sm btn-outline" title="Log Out">Logout</button>
+          </template>
+          <template v-else>
+            <a href="login.html" class="btn btn-sm btn-outline">Log In</a>
+            <a href="register.html" class="btn btn-sm btn-primary">Sign Up</a>
+          </template>
+
+          <button @click="mobileMenuOpen = !mobileMenuOpen" class="mobile-menu-btn" aria-label="Toggle navigation">
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Mobile Navigation Drawer -->
+      <div v-if="mobileMenuOpen" class="mobile-nav-drawer">
+        <a href="../index.html" class="nav-link" @click="mobileMenuOpen = false">Home</a>
+        <a href="items.html" class="nav-link" @click="mobileMenuOpen = false">Browse Items</a>
+        <template v-if="currentUser">
+          <a href="add-item.html" class="nav-link" @click="mobileMenuOpen = false">+ Add Item</a>
+          <a href="requests.html" class="nav-link" @click="mobileMenuOpen = false">Requests</a>
+          <a href="my-items.html" class="nav-link active" @click="mobileMenuOpen = false">My Items</a>
+          <a href="borrowed-items.html" class="nav-link" @click="mobileMenuOpen = false">Borrowed</a>
+          <a href="profile.html" class="nav-link" @click="mobileMenuOpen = false">Profile</a>
+          <a v-if="currentUser.role === 'admin'" href="admin.html" class="nav-link badge-admin" @click="mobileMenuOpen = false">
+            Admin Dashboard
+          </a>
+          <button @click="logout" class="btn btn-block btn-outline" style="margin-top: 0.5rem;">Logout</button>
+        </template>
+      </div>
+    </header>
+
+    <!-- Page Header -->
+    <div style="background: var(--bg-surface); border-bottom: 1px solid var(--border-color); padding: 2rem 0 1.5rem;">
+      <div class="container" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+        <div>
+          <h1>My Listed Items</h1>
+          <p style="color: var(--text-muted); margin: 0;">Manage your items, update availability, or post new items.</p>
+        </div>
+        <a href="add-item.html" class="btn btn-primary">+ List New Item</a>
+      </div>
+    </div>
+
+    <!-- Main Container -->
+    <main class="container" style="padding-top: 2rem; padding-bottom: 4rem;">
+      <!-- Loading State -->
+      <div v-if="loading" class="loading-box">
+        <div class="spinner"></div>
+        <p>Loading your listings...</p>
+      </div>
+
+      <!-- Error State -->
+      <div v-else-if="error" class="alert alert-danger">
+        <span>⚠️ {{ error }}</span>
+      </div>
+
+      <!-- Empty State -->
+      <div v-else-if="myItems.length === 0" class="empty-state">
+        <div class="empty-icon">📦</div>
+        <h3 class="empty-title">You haven't listed any items yet</h3>
+        <p class="empty-desc">Share textbooks, gadgets, tools, or equipment with your peers and help build our sharing community!</p>
+        <a href="add-item.html" class="btn btn-primary">+ List Your First Item</a>
+      </div>
+
+      <!-- Items List Table -->
+      <div v-else class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Preview</th>
+              <th>Title &amp; Category</th>
+              <th>Location</th>
+              <th>Deposit</th>
+              <th>Condition</th>
+              <th>Availability</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="item in myItems" :key="item.id">
+              <td style="width: 70px;">
+                <img 
+                  :src="resolveImage(item.image_url)" 
+                  :alt="item.title" 
+                  style="width: 50px; height: 50px; object-fit: cover; border-radius: var(--radius-sm);"
+                  @error="handleImgFallback"
+                >
+              </td>
+              <td>
+                <strong>{{ item.title }}</strong>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">{{ item.category_name || 'General' }}</div>
+              </td>
+              <td>{{ item.location }}</td>
+              <td>₹{{ parseFloat(item.deposit_amount || 0).toFixed(2) }}</td>
+              <td>
+                <span class="badge badge-neutral" v-uppercase>{{ formatCondition(item.item_condition) }}</span>
+              </td>
+              <td>
+                <span class="badge badge-success" v-if="item.is_available" v-uppercase>Available</span>
+                <span class="badge badge-warning" v-else v-uppercase>Reserved</span>
+              </td>
+              <td>
+                <div style="display: flex; gap: 0.4rem;">
+                  <button @click="openEditModal(item)" class="btn btn-sm btn-outline">
+                    Edit
+                  </button>
+                  <button @click="confirmDelete(item)" class="btn btn-sm btn-danger">
+                    Delete
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+
+    <!-- Edit Item Modal -->
+    <div v-if="showEditModal" class="modal-backdrop">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h3 class="modal-title">Edit Item Listing</h3>
+          <button @click="showEditModal = false" class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+          <form @submit.prevent="saveEdit" novalidate>
+            <div class="form-group">
+              <label class="form-label" for="edit_title">Item Title</label>
+              <input type="text" id="edit_title" v-model.trim="editForm.title" class="form-control" required>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="edit_category">Category</label>
+                <select id="edit_category" v-model="editForm.category_id" class="form-select">
+                  <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="edit_condition">Condition</label>
+                <select id="edit_condition" v-model="editForm.item_condition" class="form-select">
+                  <option value="new">Brand New</option>
+                  <option value="like_new">Like New</option>
+                  <option value="good">Good</option>
+                  <option value="fair">Fair</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="edit_desc">Description</label>
+              <textarea id="edit_desc" v-model.trim="editForm.description" class="form-textarea" rows="3"></textarea>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="edit_loc">Location</label>
+                <input type="text" id="edit_loc" v-model.trim="editForm.location" class="form-control">
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="edit_deposit">Deposit (₹)</label>
+                <input type="number" id="edit_deposit" v-model.number="editForm.deposit_amount" class="form-control" min="0">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="edit_avail">Availability Status</label>
+              <select id="edit_avail" v-model="editForm.is_available" class="form-select">
+                <option :value="1">Available (Ready to Borrow)</option>
+                <option :value="0">Unavailable / Reserved</option>
+              </select>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+              <button type="button" @click="showEditModal = false" class="btn btn-outline">Cancel</button>
+              <button type="submit" class="btn btn-primary" :disabled="savingEdit">
+                {{ savingEdit ? 'Saving...' : 'Save Changes' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Global Toast Container -->
+    <div id="toast-container"></div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="container footer-bottom">
+        &copy; 2026 Circlo Community Sharing Network | Frontend by Archi Gajera
+      </div>
+    </footer>
+  </div>
+
+  <!-- Practical-7 Script Loading Order -->
+  <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/my-items.js"></script>
+</body>
+</html>

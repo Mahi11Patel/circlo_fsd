@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <rect width="400" height="300" fill="#0f172a" rx="12"/>
+  <rect x="140" y="50" width="120" height="190" rx="10" fill="#334155" stroke="#64748b" stroke-width="2"/>
+  <rect x="155" y="70" width="90" height="35" rx="4" fill="#94a3b8"/>
+  <circle cx="165" cy="130" r="8" fill="#475569"/>
+  <circle cx="190" cy="130" r="8" fill="#475569"/>
+  <circle cx="215" cy="130" r="8" fill="#475569"/>
+  <circle cx="235" cy="130" r="8" fill="#ef4444"/>
+  <circle cx="165" cy="160" r="8" fill="#64748b"/>
+  <circle cx="190" cy="160" r="8" fill="#64748b"/>
+  <circle cx="215" cy="160" r="8" fill="#64748b"/>
+  <circle cx="235" cy="160" r="8" fill="#3b82f6"/>
+  <circle cx="165" cy="190" r="8" fill="#64748b"/>
+  <circle cx="190" cy="190" r="8" fill="#64748b"/>
+  <circle cx="215" cy="190" r="8" fill="#64748b"/>
+  <circle cx="235" cy="190" r="8" fill="#10b981"/>
+  <circle cx="165" cy="220" r="8" fill="#64748b"/>
+  <circle cx="190" cy="220" r="8" fill="#64748b"/>
+  <circle cx="215" cy="220" r="8" fill="#64748b"/>
+  <circle cx="235" cy="220" r="8" fill="#64748b"/>
+  <text x="200" y="275" text-anchor="middle" fill="#94a3b8" font-family="'Segoe UI', sans-serif" font-weight="bold" font-size="14">Scientific Calculator</text>
+</svg>

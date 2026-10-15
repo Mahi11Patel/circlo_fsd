@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Log In – Circlo Community Sharing Network</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="app">
+    <!-- Navigation Bar -->
+    <header class="navbar">
+      <div class="container nav-container">
+        <a href="../index.html" class="brand-logo">
+          <span class="brand-icon">C</span>
+          <span>Circlo</span>
+        </a>
+
+        <ul class="nav-links">
+          <li><a href="../index.html" class="nav-link">Home</a></li>
+          <li><a href="items.html" class="nav-link">Browse Items</a></li>
+        </ul>
+
+        <div class="nav-actions">
+          <a href="register.html" class="btn btn-sm btn-outline-primary">Sign Up</a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container" style="max-width: 480px; padding-top: 3rem; padding-bottom: 3.5rem;">
+      <div class="form-card">
+        <div style="text-align: center; margin-bottom: 1.5rem;">
+          <div class="brand-icon" style="width: 44px; height: 44px; font-size: 1.4rem; margin: 0 auto 0.75rem;">C</div>
+          <h2>Welcome Back</h2>
+          <p style="color: var(--text-muted); font-size: 0.9rem;">Log in to borrow and share items with your campus peers</p>
+        </div>
+
+        <!-- Global Alert for Server Errors / Blocked status -->
+        <div v-if="serverError" class="alert alert-danger">
+          <span>⚠️ {{ serverError }}</span>
+        </div>
+
+        <div v-if="successMsg" class="alert alert-success">
+          <span>✅ {{ successMsg }}</span>
+        </div>
+
+        <!-- Login Form -->
+        <form @submit.prevent="handleLogin" novalidate>
+          <div class="form-group">
+            <label class="form-label" for="username">Username or Email</label>
+            <input 
+              type="text" 
+              id="username" 
+              v-model.trim="form.username" 
+              class="form-control" 
+              :class="{ 'is-invalid': errors.username }"
+              placeholder="e.g. student or admin"
+              autocomplete="username"
+            >
+            <!-- Inline Red Error Text -->
+            <span v-if="errors.username" class="error-text">{{ errors.username }}</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="password">Password</label>
+            <input 
+              type="password" 
+              id="password" 
+              v-model="form.password" 
+              class="form-control" 
+              :class="{ 'is-invalid': errors.password }"
+              placeholder="Enter your password"
+              autocomplete="current-password"
+            >
+            <!-- Inline Red Error Text -->
+            <span v-if="errors.password" class="error-text">{{ errors.password }}</span>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block btn-lg" :disabled="loading" style="margin-top: 1.25rem;">
+            <span v-if="loading" class="spinner" style="width: 18px; height: 18px; border-width: 2px; margin: 0;"></span>
+            <span>{{ loading ? 'Signing in...' : 'Sign In' }}</span>
+          </button>
+        </form>
+
+        <div style="text-align: center; margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-muted);">
+          Don't have an account yet? 
+          <a href="register.html" style="font-weight: 700;">Create one for free</a>
+        </div>
+      </div>
+
+      <!-- Demo Accounts Helper Box -->
+      <div style="background: var(--bg-surface); border: 1px dashed var(--border-color); border-radius: var(--radius-md); padding: 1.25rem; font-size: 0.85rem;">
+        <h4 style="margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">⚡ Quick Test Demo Accounts (Password: <code>1234</code>):</h4>
+        <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span><strong>student</strong> (Rahul Sharma - User)</span>
+            <button @click="fillDemo('student')" class="btn btn-sm btn-outline" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;">Fill</button>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span><strong>priya</strong> (Priya Patel - User)</span>
+            <button @click="fillDemo('priya')" class="btn btn-sm btn-outline" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;">Fill</button>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span><strong>admin</strong> (Platform Admin)</span>
+            <button @click="fillDemo('admin')" class="btn btn-sm btn-outline" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;">Fill</button>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span><strong>spammer</strong> (Blocked User Demo)</span>
+            <button @click="fillDemo('spammer')" class="btn btn-sm btn-outline" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;">Fill</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Global Toast Container -->
+    <div id="toast-container"></div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="container footer-bottom">
+        &copy; 2026 Circlo Community Sharing Network | Frontend by Archi Gajera
+      </div>
+    </footer>
+  </div>
+
+  <!-- Practical-7 Script Loading Order -->
+  <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+  <script src="../js/utils.js"></script>
+  <script src="../js/login.js"></script>
+</body>
+</html>
